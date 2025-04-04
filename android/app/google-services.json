@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "853272792377",
+    "project_id": "midm-mfit-2230b",
+    "storage_bucket": "midm-mfit-2230b.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:853272792377:android:bce1c3e00858e906d56ce8",
+        "android_client_info": {
+          "package_name": "kr.co.midm.mfit"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDIjX3IqrpZdd0Q0jPHeVnUhllhRuvZjho"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
