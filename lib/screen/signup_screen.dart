@@ -54,20 +54,23 @@ class _SignupScreenState extends State<SignupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('회원가입'),
-      ),
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Form(
             key: _formKey,
             child: Column(
-              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
+                Text(
+                  'Create Account',
+                  style: TextStyle(fontSize: 40, color: Colors.black),
+                ),
+                SizedBox(height: 50,),
                 TextFormField(
                   controller: _emailController,
-                  decoration: InputDecoration(labelText: '이메일'),
+                  decoration: InputDecoration(labelText: 'Email'),
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -79,10 +82,10 @@ class _SignupScreenState extends State<SignupScreen> {
                     return null;
                   },
                 ),
-                SizedBox(height: 16.0),
+                SizedBox(height: 25.0),
                 TextFormField(
                   controller: _passwordController,
-                  decoration: InputDecoration(labelText: '비밀번호'),
+                  decoration: InputDecoration(labelText: 'Password'),
                   obscureText: true,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -94,10 +97,10 @@ class _SignupScreenState extends State<SignupScreen> {
                     return null;
                   },
                 ),
-                SizedBox(height: 16.0),
+                SizedBox(height: 25.0),
                 TextFormField(
                   controller: _confirmPasswordController,
-                  decoration: InputDecoration(labelText: '비밀번호 확인'),
+                  decoration: InputDecoration(labelText: 'Repeat Password'),
                   obscureText: true,
                   validator: (value) {
                     if (value == null || value.isEmpty) {
@@ -109,10 +112,20 @@ class _SignupScreenState extends State<SignupScreen> {
                     return null;
                   },
                 ),
-                SizedBox(height: 24.0),
+                SizedBox(height: 50.0),
                 ElevatedButton(
                   onPressed: _createUserWithEmailAndPassword,
-                  child: Text('회원가입'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.amber,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text(
+                    'Sign Up',
+                    style: TextStyle(fontSize: 18, color: Colors.black),
+                  ),
                 ),
                 if (_errorMessage != null)
                   Padding(
