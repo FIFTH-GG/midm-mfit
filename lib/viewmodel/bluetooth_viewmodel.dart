@@ -59,6 +59,8 @@ class BluetoothViewModel extends ChangeNotifier {
     await device.connect();
     _connectedDevice = device;
 
+    await device.requestMtu(100);
+
     final services = await device.discoverServices();
     for (var service in services) {
       if (service.uuid.toString().toUpperCase() == 'FFF0') {

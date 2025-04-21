@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
+import 'package:mfit/screen/setting_screen.dart';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -19,6 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Map<String, BluetoothConnectionState> deviceConnectionStatus = {};
   final List<StreamSubscription<BluetoothConnectionState>> _subscriptions = [];
   Map<String, String> deviceNameMap = {};
+  Map<String, String> deviceDateMap = {};
 
   @override
   void initState() {
@@ -68,12 +70,27 @@ class _HomeScreenState extends State<HomeScreen> {
       MaterialPageRoute(builder: (context) => DeviceConfirmationScreen(device: device)),
     );
 
-    if(result != null && result is bool) {
-      if (result) {
-        Navigator.push(
+    if(result != null && result is Map<String, dynamic>) {
+      if(result['remove'] == true) {
+
+      } else if (result['result']) {
+        String name = device.name.isNotEmpty
+            ? device.name
+            : (deviceNameMap[device.id.toString()] ?? "Unknown Device");
+
+        final deviceScreenResult = await Navigator.push(
           context,
-          MaterialPageRoute(builder: (context) => DeviceScreen(device: device)),
+          MaterialPageRoute(
+            builder: (context) => DeviceScreen(device: device, name: name, date: deviceDateMap[device.id.toString()] ?? "Unknown", map: result),
+          ),
         );
+
+        if (deviceScreenResult != null &&
+            deviceScreenResult is Map<String, dynamic> &&
+            deviceScreenResult['removed'] == true) {
+          // 삭제된 경우 리스트 갱신
+          _restoreConnectedDevices();
+        }
       } else {
 
       }
@@ -98,17 +115,17 @@ class _HomeScreenState extends State<HomeScreen> {
         children: [
           Container(
             width: double.infinity,
-            height: 200,
+            height: 250,
             color: Colors.amber,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const SizedBox(height: 25),
+                const SizedBox(height: 50),
                 Center(
                   child: Image.asset(
                     'assets/images/logo_white.png',
-                    height: 100,
+                    height: 120,
                   ),
                 ),
                 Expanded(
@@ -123,7 +140,12 @@ class _HomeScreenState extends State<HomeScreen> {
                       const Spacer(),
                       IconButton(
                         icon: const Icon(Icons.settings, color: Colors.white, size: 30),
-                        onPressed: () {},
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => SettingScreen()),
+                          );
+                        },
                       ),
                     ],
                   ),
@@ -164,7 +186,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             title: Text(device.name.isNotEmpty ? device.name : (deviceNameMap[device.id.toString()] ?? "Unknown Device")),
                             subtitle: Text(device.id.toString()),
                             trailing: Text(
-                              "2025-04-01",
+                              deviceDateMap[device.id.toString()] ?? "Unknown",
                               style: const TextStyle(
                                 color: Colors.blue,
                                 fontWeight: FontWeight.bold,
@@ -199,13 +221,19 @@ class _HomeScreenState extends State<HomeScreen> {
     final prefs = await SharedPreferences.getInstance();
     List<String> savedList = prefs.getStringList('connected_devices') ?? [];
 
-    final entry = "${device.id}|${device.name}";
+    final now = DateTime.now();
+    final formattedDate = "${now.year.toString().padLeft(4, '0')}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}";
+
+    final entry = "${device.id}|${device.name}|$formattedDate";
     bool alreadyExists = savedList.any((e) => e.startsWith(device.id.toString()));
 
     if (!alreadyExists) {
       savedList.add(entry);
       await prefs.setStringList('connected_devices', savedList);
       debugPrint("[저장됨] connected_devices: $savedList");
+
+      deviceNameMap[device.id.toString()] = device.name;
+      deviceDateMap[device.id.toString()] = formattedDate;
     }
   }
 
@@ -220,10 +248,10 @@ class _HomeScreenState extends State<HomeScreen> {
       final parts = entry.split('|');
       final id = parts[0];
       final name = parts.length > 1 ? parts[1] : "";
+      final date = parts.length > 2 ? parts[2] : "Unknown";
       final device = BluetoothDevice.fromId(id);
-
-      // BluetoothDevice 객체에는 이름 설정 불가 → 화면에 표시할 이름만 따로 저장 필요
-      deviceNameMap[id] = name;  // 별도 Map으로 저장
+      deviceNameMap[id] = name;
+      deviceDateMap[id] = date;
       devices.add(device);
     }
     return devices;

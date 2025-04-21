@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:mfit/service/auth_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'home_screen.dart';
 import 'signup_screen.dart'; // 회원가입 화면 import 필요
@@ -19,6 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _autoLogin = false; // 자동 로그인 상태 변수
   final AuthService _authService = AuthService();
 
+
   Future<void> _signInWithEmailAndPassword() async {
     if (_formKey.currentState!.validate()) {
       final email = _emailController.text.trim();
@@ -27,14 +29,18 @@ class _LoginScreenState extends State<LoginScreen> {
       final user = await _authService.signIn(email, password);
 
       if (user != null) {
+        if (_autoLogin) {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setString('email', email);
+          await prefs.setString('password', password);
+          await prefs.setInt('loginTime', DateTime.now().millisecondsSinceEpoch);
+        }
+
         print('로그인 성공');
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
+        Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
       } else {
         setState(() {
-          _errorMessage = '로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.';
+          _errorMessage = 'Login failed. Please check your email and password.';
         });
       }
     }
@@ -45,6 +51,30 @@ class _LoginScreenState extends State<LoginScreen> {
       context,
       MaterialPageRoute(builder: (context) => SignupScreen()),
     );
+  }
+
+  Future<void> _checkAutoLogin() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedEmail = prefs.getString('email');
+    final savedPassword = prefs.getString('password');
+    final loginTime = prefs.getInt('loginTime');
+
+    if (savedEmail != null &&
+        savedPassword != null &&
+        loginTime != null &&
+        DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(loginTime)).inDays < 7) {
+      final user = await _authService.signIn(savedEmail, savedPassword);
+      if (user != null) {
+        Navigator.pushNamedAndRemoveUntil(context, '/home', (route) => false);
+      }
+    }
+  }
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    _checkAutoLogin();
   }
 
   @override
@@ -73,7 +103,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.grey[300],
-                        hintText: 'email',
+                        hintText: 'Email',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                           borderSide: BorderSide.none,
@@ -82,10 +112,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       keyboardType: TextInputType.emailAddress,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return '이메일을 입력해주세요.';
+                          return 'Please enter your email.';
                         }
                         if (!value.contains('@')) {
-                          return '유효한 이메일 형식이 아닙니다.';
+                          return 'Please enter a valid email address.';
                         }
                         return null;
                       },
@@ -96,7 +126,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       decoration: InputDecoration(
                         filled: true,
                         fillColor: Colors.grey[300],
-                        hintText: 'password',
+                        hintText: 'Password',
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(8),
                           borderSide: BorderSide.none,
@@ -105,7 +135,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       obscureText: true,
                       validator: (value) {
                         if (value == null || value.isEmpty) {
-                          return '비밀번호를 입력해주세요.';
+                          return 'Please enter your password.';
                         }
                         return null;
                       },

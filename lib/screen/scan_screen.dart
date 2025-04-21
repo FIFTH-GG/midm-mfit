@@ -59,13 +59,13 @@ class _ScanScreenState extends State<ScanScreen> {
                       ),
                       const SizedBox(height: 30),
                       const Text(
-                        "주변의 장비를 찾고 있습니다.\n잠시만 기다려주세요.",
+                        "Searching for nearby devices.\nPlease wait a moment.",
                         textAlign: TextAlign.center,
                         style: TextStyle(fontSize: 18, color: Colors.black),
                       ),
                     ] else
                       const Text(
-                        "검색된 장치가 없습니다.",
+                        "No devices found.",
                         style: TextStyle(fontSize: 16, color: Colors.grey),
                       ),
                   ],
@@ -97,25 +97,55 @@ class _ScanScreenState extends State<ScanScreen> {
               ),
             ),
           Padding(
-            padding: const EdgeInsets.only(bottom: 20),
-            child: OutlinedButton(
-              onPressed: () {
+            padding: const EdgeInsets.only(bottom: 40),
+            child: _buildCancelButton(
+              context,
+              () {
                 FlutterBluePlus.stopScan();
                 Navigator.pop(context);
-              },
-              style: OutlinedButton.styleFrom(
-                side: const BorderSide(color: Colors.red),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 12),
-              ),
-              child: const Text("취소", style: TextStyle(color: Colors.red, fontSize: 16)),
+              }
             ),
           ),
+          const SizedBox(height: 30,),
         ],
       ),
     );
   }
 }
+
+Widget _buildCancelButton(BuildContext context, Function() onPressed) {
+  return Container(
+    width: 300,
+    child: TextButton(
+      onPressed: onPressed,
+      style: TextButton.styleFrom(
+        foregroundColor: Colors.red,
+        side: const BorderSide(color: Colors.red),
+        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
+      ),
+      child: const Text('Cancel', style: TextStyle(fontSize: 16)),
+    ),
+  );
+}
+
+/*
+Container(
+              width: 250,
+              child: OutlinedButton(
+                onPressed: () {
+                  FlutterBluePlus.stopScan();
+                  Navigator.pop(context);
+                },
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Colors.red),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 12),
+                ),
+                child: const Text("Cancel", style: TextStyle(color: Colors.red, fontSize: 16)),
+              ),
+            ),
+
+ */
 

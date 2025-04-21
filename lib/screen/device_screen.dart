@@ -2,13 +2,18 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_blue_plus/flutter_blue_plus.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../viewmodel/bluetooth_viewmodel.dart';
+import 'cartridge_screen.dart';
 
 
 class DeviceScreen extends StatefulWidget {
   final BluetoothDevice device;
+  final String name;
+  final String date;
+  final Map<String, dynamic> map;
 
-  const DeviceScreen({Key? key, required this.device}) : super(key: key);
+  const DeviceScreen({Key? key, required this.device, required this.name, required this.date, required this.map}) : super(key: key);
 
   @override
   State<DeviceScreen> createState() => _DeviceScreenState();
@@ -26,16 +31,16 @@ class _DeviceScreenState extends State<DeviceScreen> {
 
   @override
   void dispose() {
+    widget.device.disconnect();
     super.dispose();
   }
 
 
   void _navigateToCartridgeScreen(BluetoothDevice device) async {
-    /*
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => CartridgeScreen()),
-    );*/
+      MaterialPageRoute(builder: (context) => CartridgeScreen(device: device,)),
+    );
   }
 
 
@@ -59,6 +64,25 @@ class _DeviceScreenState extends State<DeviceScreen> {
     );
   }
 
+  Future<void> _removeDevice(BluetoothDevice device) async {
+    try {
+      await device.disconnect();  // 연결 해제
+    } catch (e) {
+      debugPrint("BLE disconnect error: $e");
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    List<String> savedList = prefs.getStringList('connected_devices') ?? [];
+
+    savedList.removeWhere((entry) => entry.startsWith(device.id.toString()));
+    await prefs.setStringList('connected_devices', savedList);
+    debugPrint("[삭제됨] connected_devices: $savedList");
+
+    if (mounted) {
+      Navigator.pop(context, {'removed': true});
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final bluetooth = context.watch<BluetoothViewModel>();
@@ -72,9 +96,29 @@ class _DeviceScreenState extends State<DeviceScreen> {
         actions: [
           TextButton(
             onPressed: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Delete Device'),
+                  content: const Text('Are you sure you want to remove this device?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pop(context); // 먼저 다이얼로그 닫고
+                        _removeDevice(widget.device);
+                      },
+                      child: const Text('Remove', style: TextStyle(color: Colors.red)),
+                    ),
+                  ],
+                ),
+              );
             },
-            child: Text('Remove', style: TextStyle(color: Colors.red),),
-          )
+            child: const Text('Remove', style: TextStyle(color: Colors.red)),
+          ),
         ],
       ),
       body: Column(
@@ -120,7 +164,7 @@ class _DeviceScreenState extends State<DeviceScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              widget.device.name,
+                              widget.name,
                               style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
                             ),
                             const SizedBox(height: 4),
@@ -129,9 +173,9 @@ class _DeviceScreenState extends State<DeviceScreen> {
                               style: TextStyle(fontSize: 14, color: Colors.black),
                             ),
                             const SizedBox(height: 8),
-                            const Text(
-                              'Registration Date : 2025-03-04',
-                              style: TextStyle(fontSize: 12, color: Colors.black),
+                            Text(
+                              'Registration Date : ${widget.date}',
+                              style: const TextStyle(fontSize: 12, color: Colors.black),
                             ),
                           ],
                         ),
@@ -176,7 +220,20 @@ class _DeviceScreenState extends State<DeviceScreen> {
               ),
               width: double.infinity, // 화면 끝까지 확장
               height: 200,
-              child: const Text('data'),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 5.0,),
+                  Text('Device ID : ${widget.map['ID']}', style: TextStyle(fontSize: 18, color: Colors.black),),
+                  const SizedBox(height: 10.0,),
+                  Text('Cartridge ID : ${widget.map['C_ID'] == 'AAAAAAAAAAAAAA' ? 'unknown' : widget.map['C_ID']}', style: TextStyle(fontSize: 18, color: Colors.black),),
+                  const SizedBox(height: 10.0,),
+                   Text('Remaining Count : ${widget.map['C_CNT']}', style: TextStyle(fontSize: 18, color: Colors.black),),
+                  const SizedBox(height: 10.0,),
+                   Text('Total Count : ${widget.map['T_CNT']}', style: TextStyle(fontSize: 18, color: Colors.black),),
+                  const SizedBox(height: 10.0,),
+                ],
+              ),
             ),
           ),
           const SizedBox(height: 10),
@@ -186,10 +243,10 @@ class _DeviceScreenState extends State<DeviceScreen> {
               child: Column(
                 children: [
                   Row(
-                    children: [_buildButton("카트리지", () => _navigateToCartridgeScreen(widget.device)), _buildButton("화장품", () {})],
+                    children: [_buildButton("Cartridge", () => _navigateToCartridgeScreen(widget.device)), _buildButton("N/A", () {})],
                   ),
                   Row(
-                    children: [_buildButton("A/S 지원", () {}), _buildButton("", () {})],
+                    children: [_buildButton("Report Issue", () {}), _buildButton("N/A", () {})],
                   ),
                 ],
               ),

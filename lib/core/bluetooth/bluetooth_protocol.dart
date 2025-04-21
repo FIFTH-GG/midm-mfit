@@ -45,12 +45,12 @@ class BluetoothProtocol {
     );
   }
 
-  String createCountMessage(int pm, int count) {
+  String createCartridgeRegistrationMessage(String id, int count) {
     return createMessage(
       starter: '[',
-      length: 13,
+      length: 26,
       command: 'CNT',
-      data: "$pm${count.toString().padLeft(6, '0')}",
+      data: "$id${count.toString().padLeft(6, '0')}",
       ender: ']',
     );
   }

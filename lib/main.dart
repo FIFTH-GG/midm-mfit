@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:mfit/screen/home_screen.dart';
 import 'package:mfit/screen/login_screen.dart';
 import 'package:mfit/viewmodel/bluetooth_viewmodel.dart';
 import 'package:permission_handler/permission_handler.dart';
@@ -29,6 +30,11 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      initialRoute: '/login',
+      routes: {
+        '/login': (context) => const LoginScreen(),
+        '/home': (context) => const HomeScreen(),
+      },
       home: LoginScreen(),
     );
   }
